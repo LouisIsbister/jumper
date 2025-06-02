@@ -1,0 +1,2 @@
+# Jumper  
+I thoroughly dislike typing out a really long an laborious directoy path to get to my university files. As such, this is a simple program to that allows you to hook directories you often visit and navigate to them immediately by just executing `jumper <hook_name>`! I am full aware this is neither orignal nor very difficult to make, I just wanted an execuse to write something small in C before my OS textbook arrives :)
