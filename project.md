@@ -12,11 +12,11 @@ Commands we would need:
 `jumper -mod <hook_name> -dir <new_dir> [-descr  ... description ... ]`
   - modeifiy an existing hookname
 
-`jumper -descr <hook_name>`
-  - print the description associated with a hook
-
 `jumper -del <hook_name>`
   - delete a hook
+
+`jumper -descr <hook_name>`
+  - print the description associated with a hook
 
 `jumper -list`
   - print all hooks alone with their descriptions
@@ -27,3 +27,5 @@ Commands we would need:
 
 Have a conf file that stores said hooks in the form:
 hook_name|target_dir|description
+
+Add note that the hook name cannot have a | in it!

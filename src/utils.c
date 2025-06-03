@@ -1,54 +1,57 @@
 
 #include "utils.h"
 
-
 /**
- * the winapi function GetCurrentDirectoryA returns a couple of values,
- * if it returns 0 something failed. However, if the provided buffer is
- * too small, the return vale is the required size of the buffer! Hence
- * why __tmp__ is being passed with length zero to get that required size
+ * keep in mind tokens is declared as `char* hookTokens[3]`
+ * 
+ * returns the byte offset to this hook entry
  */
-ERR_CODE retrieveConfFile(char** path) {
-    if (path == NULL || *path == NULL) return ERR_NULL;
-    
-    // fine the last occurrence of a backslash in the module path
-    size_t len = strlen(*path);
-    ssize_t i = (ssize_t) len - 1; // go to the last backslash in the path
-    while (i >= 0 && (*path)[i] != '\\') {
-        i--;
+uint16_t getTargetHookEntry(char** tokens, char* targetName, int targetNameLen, FILE* confFile) {
+    char hookEntry[MAX_HOOK_LENGTH];
+    uint16_t line = 0;
+
+    // save the start of teh current line position
+    while (fgets(hookEntry, MAX_HOOK_LENGTH, confFile) != NULL) {
+        line++;
+        if (strlen(hookEntry) < targetNameLen) { continue; }
+        if (strncmp(hookEntry, targetName, targetNameLen) != 0) { continue; }
+        if (hookEntry[targetNameLen] != '|') { continue; }
+
+        // rewind the file ptr to the start of the target line
+        fseek(confFile, 0, SEEK_SET);
+        ERR_CODE ret = tokeniseHookEntry(tokens, hookEntry);
+        if (ret != ERR_SUCCESS) { return 0; }
+        return line;  // return the curretn position of the hook!
     }
-    if (i < 0) { return ERR_INVALID_PATH; }
-
-    size_t newLen = i + CONF_FNAME_LEN;
-    char* newPath = realloc(*path, newLen);
-    if (newPath == NULL) { return ERR_NULL; }
-    
-    memcpy(newPath + i, CONF_FNAME, CONF_FNAME_LEN);
-    newPath[newLen - 1] = '\0';
-
-    *path = newPath;
-    return ERR_SUCCESS;
+    return 0;
 }
 
-ERR_CODE tokeniseHookEntry(char** tokenBuffer, char* hookEntry) {  
+ERR_CODE tokeniseHookEntry(char** tokens, char* hookEntry) {  
     // perform tokenisation
     int i = 0;
     char* saveState;
-    char* line = strtok_r(hookEntry, "|", &saveState);
-    while (line != NULL && i < 3) {
-        tokenBuffer[i++] = line;
-        line = strtok_r(NULL, "|", &saveState);
+    char* token = strtok_r(hookEntry, "|", &saveState);
+    while (token != NULL && i < 3) {
+        tokens[i++] = token;
+        token = strtok_r(NULL, "|", &saveState);
     }
-    if (i != 2) { return ERR_INVALID_HOOKED_PATH; }
+    if (i != 3) { return ERR_INVALID_HOOKED_PATH; }
 
     // update the description string
-    size_t descrLen = strlen(tokenBuffer[2]);
+    size_t descrLen = strlen(tokens[2]);
     if (descrLen > 0) {
-        tokenBuffer[2][descrLen - 1] = '\0'; // remove the newline
+        tokens[2][descrLen - 1] = '\0'; // remove the newline
     } else {
-        tokenBuffer[2] = "No hook description.";
+        tokens[2] = "No hook description.";
     }
     return ERR_SUCCESS;
+}
+
+void safeFileClose(FILE** file) {
+    if (file != NULL && *file != NULL) {
+        fclose(*file);
+        *file = NULL;
+    }
 }
 
 char* retrieveErrMsg(ERR_CODE ec) {
@@ -56,9 +59,10 @@ char* retrieveErrMsg(ERR_CODE ec) {
         case ERR_SUCCESS: return "Success.";
         case ERR_FAILURE: return "Something failed, go debug it properly smh.";
         case ERR_NULL: return "NULL deteected. Graccceeeffulllyyyy exiting...";
+        case ERR_INVALID_CMD: return "Invalid command detected!";
         case ERR_PATH_TO_LONG: return "Provided path longer than 2048 characters! Seems a bit excessive?!";
         case ERR_INVALID_PATH: return "Invalid path format provided, please check it!";
-        case ERR_INVALID_HOOKED_PATH: return "Hooked path is invalid, check update it with `mod` or manually via jumper.conf!";
+        case ERR_INVALID_HOOKED_PATH: return "Hooked path has been corrupted, update it with `mod` or manually in jumper.conf!";
         default: return "Default case, ERR msg not implemented.";
     }
 }

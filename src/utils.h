@@ -1,35 +1,32 @@
 
 #include <windows.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #ifndef UTILS_H
 #define UTILS_H
 
-#define CONF_FNAME "\\jumper.conf"
-#define CONF_FNAME_LEN 13  // length of conf fname + 1 for the null terminator
+#define CONF_FNAME "jumper.conf"
 #define MAX_HOOK_LENGTH 1024
-
-#define ADD "-add"
-#define MOD "-mod"
-#define DESCR "-descr"
-#define DIR "-dir"
-#define DEL "-del"
-#define LIST "-list"
-#define HELP "-help"
 
 typedef enum {
     ERR_SUCCESS,
     ERR_FAILURE,
     ERR_NULL,
 
+    ERR_INVALID_CMD,
+
     ERR_PATH_TO_LONG,
     ERR_INVALID_PATH,
     ERR_INVALID_HOOKED_PATH,
 } ERR_CODE;
 
-ERR_CODE retrieveConfFile(char** path);
 
-ERR_CODE tokeniseHookEntry(char** tokenBuffer, char* hookEntry);
+uint16_t getTargetHookEntry(char** tokens, char* targetName, int targetNameLen, FILE* confFile);
+
+ERR_CODE tokeniseHookEntry(char** tokens, char* hookEntry);
+
+void safeFileClose(FILE** file);
 
 char* retrieveErrMsg(ERR_CODE ec);
 
@@ -44,10 +41,10 @@ char* retrieveErrMsg(ERR_CODE ec);
     "  - add a new hooked directory\n\n"\
     "`jumper -mod <hook_name> -dir <new_dir> [-descr \" ... description ... \"]`\n"\
     "  - modeifiy an existing hookname\n\n"\
-    "`jumper -descr <hook_name>`\n"\
-    "  - print the description associated with a hook\n\n"\
     "`jumper -del <hook_name>`\n"\
     "  - delete a hook\n\n"\
+    "`jumper -descr <hook_name>`\n"\
+    "  - print the description associated with a hook\n\n"\
     "`jumper -list`\n"\
     "  - print all hooks alone with their descriptions\n\n"\
     "`jumper -help`\n"\
