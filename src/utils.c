@@ -2,59 +2,60 @@
 #include "utils.h"
 
 /**
- * keep in mind tokens is declared as `char* hookTokens[3]`
- * 
  * returns the byte offset to this hook entry
  */
-uint16_t getTargetHookEntry(char** tokens, char* targetName, int targetNameLen, FILE* confFile) {
-    char hookEntry[MAX_HOOK_LENGTH];
+uint16_t retrieveHook(char *targetName, char *hookBuffer, FILE *confFile) {
+    size_t targetNameLen = strlen(targetName);
+    
     uint16_t line = 0;
-
-    // save the start of teh current line position
+    char hookEntry[MAX_HOOK_LENGTH];
     while (fgets(hookEntry, MAX_HOOK_LENGTH, confFile) != NULL) {
         line++;
-        if (strlen(hookEntry) < targetNameLen) { continue; }
-        if (strncmp(hookEntry, targetName, targetNameLen) != 0) { continue; }
-        if (hookEntry[targetNameLen] != '|') { continue; }
 
-        // rewind the file ptr to the start of the target line
+        if (strlen(hookEntry) < targetNameLen) continue;
+        if (strncmp(hookEntry, targetName, targetNameLen) != 0) continue;
+        if (hookEntry[targetNameLen] != '|') continue;  // ensure we havent just found a prefix
+
+        strncpy(hookBuffer, hookEntry, MAX_HOOK_LENGTH);
+        // rewind the file ptr to the beginning
         fseek(confFile, 0, SEEK_SET);
-        ERR_CODE ret = tokeniseHookEntry(tokens, hookEntry);
-        if (ret != ERR_SUCCESS) { return 0; }
-        return line;  // return the curretn position of the hook!
+        return line;
     }
     return 0;
 }
 
-ERR_CODE tokeniseHookEntry(char** tokens, char* hookEntry) {  
-    // perform tokenisation
+
+ERR_CODE tokeniseHookEntry(char **tokens, char *hookEntry) {  
     int i = 0;
-    char* saveState;
-    char* token = strtok_r(hookEntry, "|", &saveState);
+
+    // perform tokenisation
+    char *saveState;
+    char *token = strtok_r(hookEntry, "|", &saveState);
     while (token != NULL && i < 3) {
         tokens[i++] = token;
         token = strtok_r(NULL, "|", &saveState);
     }
     if (i != 3) { return ERR_INVALID_HOOKED_PATH; }
 
-    // update the description string
-    size_t descrLen = strlen(tokens[2]);
-    if (descrLen > 0) {
-        tokens[2][descrLen - 1] = '\0'; // remove the newline
-    } else {
-        tokens[2] = "No hook description.";
-    }
     return ERR_SUCCESS;
 }
 
-void safeFileClose(FILE** file) {
+void formatHook(char *hookBuffer, char *name, char *dir, char *descr) {
+    snprintf(hookBuffer, MAX_HOOK_LENGTH, "%s|%s|%s\n", name, dir, descr);
+}
+
+void formatFromTokens(char *hookBuffer, char **tokens) {
+    snprintf(hookBuffer, MAX_HOOK_LENGTH, "%s|%s|%s\n", tokens[0], tokens[1], tokens[2]);
+}
+
+void safeFileClose(FILE **file) {
     if (file != NULL && *file != NULL) {
         fclose(*file);
         *file = NULL;
     }
 }
 
-char* retrieveErrMsg(ERR_CODE ec) {
+char *retrieveErrMsg(ERR_CODE ec) {
     switch (ec) {
         case ERR_SUCCESS: return "Success.";
         case ERR_FAILURE: return "Something failed, go debug it properly smh.";
@@ -62,6 +63,7 @@ char* retrieveErrMsg(ERR_CODE ec) {
         case ERR_INVALID_CMD: return "Invalid command detected!";
         case ERR_PATH_TO_LONG: return "Provided path longer than 2048 characters! Seems a bit excessive?!";
         case ERR_INVALID_PATH: return "Invalid path format provided, please check it!";
+        case ERR_UNKNOWN_HOOK: return "Unknown hook detected!";
         case ERR_INVALID_HOOKED_PATH: return "Hooked path has been corrupted, update it with `mod` or manually in jumper.conf!";
         default: return "Default case, ERR msg not implemented.";
     }

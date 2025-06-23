@@ -2,85 +2,110 @@
 #include "jumper.h"
 #include "commands.h"
 
-void mod(HookEntry* hEntry, uint16_t targetLine, FILE** confFile) {
-    FILE* tmp = fopen("temp.tmp", "w");
+
+void writeToTemporaryFile(uint16_t targetLine, ACTION action, char *newHook, FILE *confFile);
+
+
+void add(char *newHook, FILE *confFile) {
+    fputs(newHook, confFile);
+}
+
+
+void mod(uint16_t targetLine, char *hookName, char *hookDir, char *hookDescr, char *originalHook, FILE *confFile) {
+    // tokenise the hook entry into name, directory, and description
+    char *hTokens[3];
+    ERR_CODE ret = tokeniseHookEntry(hTokens, originalHook);
+
+    if (hookDir != NULL)   hTokens[1] = hookDir;
+    if (hookDescr != NULL) hTokens[2] = hookDescr;
+
+    char modifiedHook[MAX_HOOK_LENGTH];
+    formatFromTokens(modifiedHook, hTokens);
+
+    writeToTemporaryFile(targetLine, MOD, modifiedHook, confFile);
+}
+
+
+void del(uint16_t targetLine, FILE *confFile) {
+    writeToTemporaryFile(targetLine, DEL, "", confFile);
+}
+
+
+void writeToTemporaryFile(uint16_t targetLine, ACTION action, char *newHook, FILE *confFile) {
+    FILE *tmp = fopen("temp.tmp", "w");
     if (tmp == NULL) {
         perror("File error");
         return;
     }
 
-    char hookEntry[MAX_HOOK_LENGTH];
     uint16_t curLine = 1;
-    while (fgets(hookEntry, MAX_HOOK_LENGTH, *confFile) != NULL) {
-        if (curLine == targetLine) {
-            // update teh hook entry, 'modifying' it
-            memset(hookEntry, '\0', sizeof(hookEntry));
-            sprintf(hookEntry, "%s|%s|%s\n", hEntry->hName, hEntry->hPath, hEntry->hDescr);
+    char hookEntry[MAX_HOOK_LENGTH];
+    while (fgets(hookEntry, MAX_HOOK_LENGTH, confFile) != NULL) {
+        // if given MOD then append the new hook, otherwise skip the line for DEL
+        if (curLine++ == targetLine) {
+            if (action == MOD) {
+                fputs(newHook, tmp);
+            }
+            continue;
         }
         fputs(hookEntry, tmp);
-        curLine++;
     }
 
-    // closes and set FILE* to null to prevent double closing during cleanup
-    safeFileClose(confFile);
     fclose(tmp);
+    safeFileClose(&confFile);
 
-    // remove(CONF_FNAME);
-    // rename("temp.tmp", CONF_FNAME);
+#if !TESTING
+    remove(CONF_FNAME);
+    rename("temp.tmp", CONF_FNAME);
+#endif
 }
 
-void del(uint16_t targetLine, FILE** confFile) {
-    FILE* tmp = fopen("temp.tmp", "w");
-    if (tmp == NULL) {
-        perror("File error");
-        return;
-    }
+// // code to format conf file
+// // make sure every hook in the file has a \n on the end!
+// size_t hookLen = strlen(hookEntry);
+// if (hookEntry[hookLen - 1] != '\n') {
+//     char updated[hookLen + 1];
+//     snprintf(updated, hookLen + 1, "%s\n", hookEntry);
+//     fputs(updated, tmp);
+// } else {
+//     fputs(hookEntry, tmp);
+// }
 
-    char hookEntry[MAX_HOOK_LENGTH];
-    uint16_t curLine = 1;
-    while (fgets(hookEntry, MAX_HOOK_LENGTH, *confFile) != NULL) {
-        if (curLine == targetLine) { continue; } // effectively 'delete' the line 
-        fputs(hookEntry, tmp);
-        curLine++;
-    }
 
-    // closes and set FILE* to null to prevent double closing during cleanup
-    safeFileClose(confFile);
-    fclose(tmp);
-
-    // remove(CONF_FNAME);
-    // rename("temp.tmp", CONF_FNAME);
-}
-
-void descr(HookEntry* hEntry, char* descr) {
-    printf("\nDescription for hook: '%s'\n", hEntry->hName);
+void descr(char *hookName, char *descr) {
+    printf("\nDescription for hook: '%s'\n", hookName);
     printf(" ~ \"%s\"\n\n", descr);
 }
+
 
 /**
  * iterates through the entire file and prints each hook
  */
-void list(FILE* confFile) {
+void list(FILE *confFile) {
     char hookEntry[MAX_HOOK_LENGTH];
-    char* tokenBuffer[3];
-    int hookNum = 1;
+    int hookNum = 0;
 
-    printf("\nListing all hooks:\n\n");
-    ERR_CODE ret;
-    while (fgets(hookEntry, MAX_HOOK_LENGTH, confFile) != NULL) {
+    ERR_CODE ret; printf("\n"); // just to get the seperator!
+    while (hookNum++, fgets(hookEntry, MAX_HOOK_LENGTH, confFile) != NULL) {
         // converts the token entry into name, hook dir, and description
-        ret = tokeniseHookEntry(tokenBuffer, hookEntry);
+        char *hTokens[3];
+        ret = tokeniseHookEntry(hTokens, hookEntry);
         if (ret == ERR_INVALID_HOOKED_PATH) {
-            printf("!! It appears the following hook may have been corrupted, please check .conf file.");
+            printf("!! It appears the following hook may have been corrupted, please check .conf file:\nHook: %s\n\n", hookEntry);
+            continue;
         }
 
-        printf(" ~ Hook No.%d:\n", hookNum);
-        printf("Name: '%s'\n", tokenBuffer[0]);
-        printf("Path: '%s'\n", tokenBuffer[1]);
-        printf("Description: %s\n", tokenBuffer[2]);
-        hookNum++;
+        printf(" Hook No.%d:\n", hookNum);
+        printf("  ~ Name: '%s'\n", hTokens[0]);
+        printf("  ~ Path: '%s'\n", hTokens[1]);
+        printf("  ~ Description: %s\n\n", hTokens[2]);
+    }
+
+    if (hookNum == 1) {
+        printf("\n ~ Empty .config! No Hooks to List ~\n\n");
     }
 }
+
 
 /**
  * simply prints the help message

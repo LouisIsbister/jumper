@@ -7,23 +7,21 @@
 typedef enum {
     JUMP,
     ADD, MOD, DEL,
-    DESCR, LIST, HELP
+    DESCR, LIST, HELP,
+    NOTHING
 } ACTION;
-
-typedef struct {
-    char* hName;
-    char* hPath;
-    char* hDescr;
-    ACTION action;
-} HookEntry;
 
 // each time the program is run, only one hook will be targeted
 typedef struct {
-    char* confPath;
-    char* requConfAccess;
-    FILE* confFile;
+    char *confPath;
+    char *requiredConfAccess;
+    FILE *confFilePtr;
+    
+    ACTION action;
+    char *hookName;
 
-    HookEntry* hookEntry;
+    char *newHookDir;
+    char *newHookDescr;
 } ProgramContext;
 
 #endif

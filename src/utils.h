@@ -1,10 +1,15 @@
 
 #include <windows.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifndef UTILS_H
 #define UTILS_H
+
+// set to 1 if in testing, otherise 0
+#define TESTING 1
 
 #define CONF_FNAME "jumper.conf"
 #define MAX_HOOK_LENGTH 1024
@@ -18,17 +23,21 @@ typedef enum {
 
     ERR_PATH_TO_LONG,
     ERR_INVALID_PATH,
+    ERR_UNKNOWN_HOOK,
     ERR_INVALID_HOOKED_PATH,
 } ERR_CODE;
 
 
-uint16_t getTargetHookEntry(char** tokens, char* targetName, int targetNameLen, FILE* confFile);
+ERR_CODE retrieveHook(char *targetName, char *hookBuffer, FILE *confFile);
 
-ERR_CODE tokeniseHookEntry(char** tokens, char* hookEntry);
+ERR_CODE tokeniseHookEntry(char **tokens, char *hookEntry);
 
-void safeFileClose(FILE** file);
+void formatHook(char *hookBuffer, char *name, char *dir, char *descr);
+void formatFromTokens(char *hookBuffer, char **tokens);
 
-char* retrieveErrMsg(ERR_CODE ec);
+void safeFileClose(FILE **file);
+
+char *retrieveErrMsg(ERR_CODE ec);
 
 
 #define HELP_MSG "\n\n ~ Welcome to jumper! ~\n\n"\
@@ -37,6 +46,8 @@ char* retrieveErrMsg(ERR_CODE ec);
     "Commads:\n"\
     "`jumper <hook_name>`\n"\
     "  - jump to the directory associated with the hook name\n\n"\
+    "`jumper -init`\n"\
+    "  - creates a new jumper.conf file in the same direcotry as the jumper.exe file.\n\n"\
     "`jumper -add <hook_name> -dir <dir> [-descr \" ... description ... \"]`\n"\
     "  - add a new hooked directory\n\n"\
     "`jumper -mod <hook_name> -dir <new_dir> [-descr \" ... description ... \"]`\n"\
