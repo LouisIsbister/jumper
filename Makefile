@@ -9,7 +9,7 @@ SRCS = src\jumper.c src\commands.c src\utils.c
 
 # dbg target
 $(TARGET): $(SRCS)
-	$(CC) $(CFLAGS)  -o $(TARGET) $(SRCS)
+	$(CC) $(CFLAGS) -o $(TARGET) $(SRCS)
 
 clean:
 	del .\$(TARGET).exe
