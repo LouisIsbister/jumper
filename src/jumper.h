@@ -5,23 +5,24 @@
 #define JUMPER_H
 
 typedef enum {
-    JUMP,
-    ADD, MOD, DEL,
-    DESCR, LIST, HELP,
-    NOTHING
+        JUMP, ADD, MOD, DEL,
+        DESCR, LIST, HELP,
+        NOTHING
 } ACTION;
 
-// each time the program is run, only one hook will be targeted
-typedef struct {
-    char *confPath;
-    char *requiredConfAccess;
-    FILE *confFilePtr;
-    
-    ACTION action;
-    char *hookName;
+typedef struct ARG {
+        char* arg;
+        char* value;
+} argument;
 
-    char *newHookDir;
-    char *newHookDescr;
-} ProgramContext;
+typedef struct JUMPER_CONTEXT_STRUCT {
+        uint8_t arg_count;
+        argument* args;
+
+        char required_conf_access[3];
+
+        ACTION action;
+} jumper_context;
+
 
 #endif
