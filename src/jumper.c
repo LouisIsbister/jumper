@@ -14,6 +14,7 @@ static bool strncmp_ext(const char* s1, const char* s2, uint8_t n);
 static void cleanup_jumper_context();
 
 
+
 static jumper_context* _jctx;
 
 
@@ -32,9 +33,8 @@ main(int argc, char **argv) {
         }
 
         parse_args(argc, argv);
-        for (uint8_t i = 0; i < _jctx->arg_count; i++) {
-                printf("%s -> %s %d\n", _jctx->args[i].arg, _jctx->args[i].value,_jctx->arg_count);
-        }
+
+        DEBUG_JUMPER_CONTEXT(_jctx);
 
 
         // exec(argc, argv);
@@ -57,21 +57,22 @@ init_context() {
 
         memset(_jctx->required_conf_access, '\0', sizeof(_jctx->required_conf_access));
         _jctx->required_conf_access[0] = 'r';
-        _jctx->action = NOTHING;
         _jctx->arg_count = 0;
 }
 
+
 static void
 parse_args(int argc, char **argv) {
-        argument* arg_ptr = _jctx->args;
-        uint8_t argv_count = 1;
-
-        while (argv_count < argc) {
-                arg_ptr = (argument*)malloc(sizeof(argument));
-                arg_ptr->arg = argv[argv_count++];
-                if (argv_count < argc && argv[argv_count][0] != '-') {
-                        arg_ptr->value = argv[argv_count++];
+        argument** a = _jctx->args;
+        
+        uint8_t argv_ptr = 1;
+        while (argv_ptr < argc) {
+                *a = (argument*)malloc(sizeof(argument));
+                (*a)->arg = argv[argv_ptr++];
+                if (argv_ptr < argc && argv[argv_ptr][0] != '-') {
+                        (*a)->value = argv[argv_ptr++];
                 }
+                a++; _jctx->arg_count++;
         }
 }
 

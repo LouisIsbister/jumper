@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "\n\n @ Testing"
+echo -e "\n@ Testing\n"
 
 jumper -add hook_a -dir /home/louis/uni-projects -descr "hello world!"
-jumper hook_a
+# jumper hook_a
