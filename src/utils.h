@@ -7,12 +7,32 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-// set to 1 if in testing, otherise 0
-#define TESTING 1
 
-// #define MAX_ARG_COUNT                   3
+#define TESTING                         0
+#define TEST_CONF_FNAME                 "jumper.conf.example"
+
+#define MAX_ARG_COUNT                   3
 #define CONF_FNAME                      "/etc/jumper.conf"
 #define MAX_HOOK_LENGTH                 1024
+
+#define NUM_FIELDS_IN_HOOK              3
+
+typedef enum jmp_flag {
+        // standalone commands. I.e. you could not include -add and -del in the same command 
+        JUMP, 
+        ADD,
+        MOD,
+        DEL,
+        LIST,
+        HELP,
+
+        // additional flags used for setting the value of certain information
+        DIR,
+        DESCR,
+
+        UNKNOWN
+} jmp_flag_t;
+
 
 typedef enum {
         ERR_SUCCESS,
@@ -25,19 +45,22 @@ typedef enum {
         ERR_INVALID_PATH,
         ERR_UNKNOWN_HOOK,
         ERR_INVALID_HOOKED_PATH,
-} ERR_CODE;
+} errorc;
 
 
-uint16_t retrieveHook(char *targetName, char *hookBuffer, FILE *confFile);
+jmp_flag_t flag_type_of(const char* str);
+const char* flag_type_to_str(const jmp_flag_t a);
 
-ERR_CODE tokeniseHookEntry(char **tokens, char *hookEntry);
+uint32_t retrieve_hook(char *target_hook_name, char *buffer, FILE *conf_file);
 
-void formatHook(char *hookBuffer, char *name, char *dir, char *descr);
-void formatFromTokens(char *hookBuffer, char **tokens);
+errorc tokenise_hook(char **tokens, char *hook_entry);
 
-void safeFileClose(FILE **file);
+void format_hook(char *hook_buffer, char *name, char *dir, char *descr);
+void format_hook_from_tokens(char *hook_buffer, char **tokens);
 
-char *retrieveErrMsg(ERR_CODE ec);
+void safe_file_close(FILE **file);
+
+const char* retrieve_err_msg(errorc ec);
 
 
 #define HELP_MSG "\n\n  ~ Welcome to jumper! ~\n\n"\

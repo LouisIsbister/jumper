@@ -8,8 +8,8 @@ As much as I enjoy doing things from the command line, one thing I thoroughly di
 `jumper -add <hook_name> -dir <dir> [-descr "<description>"]`
   - create a new hooked directory
 
-`jumper -mod <hook_name> [-dir <new_dir>] [-descr "<new_description>"]`
-  - modify the contents of an existing hook. Both the directory and description are optional, providing neither will simply do nothing!
+`jumper -mod <hook_name> (-dir <new_dir> | -descr "<new_description>")`
+  - modify the contents of an existing hook. Both the directory and description are optional, but at least on must always be provided!
 
 `jumper -del <hook_name>`
   - delete a hook by its name

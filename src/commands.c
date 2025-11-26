@@ -1,6 +1,8 @@
 
-// #include "jumper.h"
-// #include "commands.h"
+#include "jumper.h"
+
+
+
 
 
 // void writeToTemporaryFile(uint16_t targetLine, ACTION action, char *newHook, FILE *confFile);
