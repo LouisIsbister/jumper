@@ -86,10 +86,9 @@ main(int argc, char **argv) {
 
         parse_args(argc, argv);
 
-        // DEBUG_JUMPER_CONTEXT(_jctx);
-
         if (!validate_cmd()) {
                 printf(" [ERR] Invalid combination of arguments detected, please use the -help flag for further information.\n");
+                DEBUG_JUMPER_CONTEXT(_jctx);
                 cleanup_and_exit(0);
         }
 
@@ -196,7 +195,7 @@ retrieve_flag_context(const char *str) {
 
                 size_t str_l = strlen(str);
                 size_t flg_l = strlen(flag->name);
-                if (str_l == flg_l && strncmp(flag->name, str, str_l))
+                if (str_l == flg_l && strncmp(flag->name, str, str_l) == 0)
                         return flag;
         }
         return NULL;

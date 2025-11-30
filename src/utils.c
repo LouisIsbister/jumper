@@ -95,7 +95,7 @@ tokenise_hook(hook_entry_t *hook) {
 
                 hook->tokens[i] = (char *)calloc(strlen(token)+1, sizeof(char));
                 if (hook->tokens[i] == NULL) {
-                        printf("Failed to allocate memory for token: %s\n", token);
+                        printf(" [ERR] Failed to allocate memory for token: %s\n", token);
                         continue;
                 }
                 strncpy(hook->tokens[i], token, strlen(token));
@@ -103,7 +103,7 @@ tokenise_hook(hook_entry_t *hook) {
         }
 
         if (token != NULL) {
-                printf("Token left: '%s', hook context: '%s'\n", token, hook->content);
+                printf(" [ERR] Token left: '%s', hook context: '%s'\n", token, hook->content);
                 return ERR_INVALID_HOOKED_PATH;
         }
         return ERR_SUCCESS;

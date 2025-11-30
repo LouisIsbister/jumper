@@ -6,22 +6,21 @@
 
 
 static errorc
-write_changes(const char *content, uint32_t target_line_number, FILE* conf_file) {
+write_changes(const char *new_content, uint32_t target_line_number, FILE* conf_file) {
         FILE *tmp = fopen(TMP_CONF_FNAME, "w");
         if (tmp == NULL) {
                 printf(" [ERR] Failed to open temp file. Exiting...\n");
                 return ERR_FAILURE;
         }
 
+        char *writer;
+
         uint16_t line = 1;
         char line_buffer[MAX_HOOK_LENGTH];
         while (fgets(line_buffer, MAX_HOOK_LENGTH, conf_file) != NULL) {
-                if (line == target_line_number) {
-                        fprintf(tmp, "%s", content);
-                } else {
-                        fprintf(tmp, "%s", line_buffer);
-                }
-                line++;
+                writer = target_line_number == line++ ? 
+                        new_content : line_buffer;
+                fprintf(tmp, "%s", writer);
         }
 
         remove(CONF_FNAME);
@@ -33,11 +32,8 @@ write_changes(const char *content, uint32_t target_line_number, FILE* conf_file)
 
 static jmp_arg_t*
 retrieve_arg_by_flag(jmp_context_t *jctx, jmp_flag_t type) {
-        uint8_t l = sizeof(jctx->args) / sizeof(jmp_arg_t*);
-        for (uint8_t i = 0; i < l; i++) {
+        for (uint8_t i = 0; i < jctx->arg_count; i++) {
                 jmp_arg_t *arg = jctx->args[i];
-                if (arg == NULL)
-                        continue;
                 if (type == arg->flag->type)
                         return arg;
         }
