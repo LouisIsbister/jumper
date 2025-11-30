@@ -17,6 +17,7 @@ init_hook_entry(const char *hook_name, FILE *conf_file) {
         errorc err = populate_hook_entry(hook_name, hook, conf_file);
         if (err != ERR_SUCCESS) {
                 cleanup_hook_entry(hook);
+                log_err(err);
                 return NULL;
         }
         return hook;
@@ -102,10 +103,9 @@ tokenise_hook(hook_entry_t *hook) {
                 token = strtok_r(NULL, "|", &save_state);
         }
 
-        if (token != NULL) {
-                printf(" [ERR] Token left: '%s', hook context: '%s'\n", token, hook->content);
+        if (token != NULL)
                 return ERR_INVALID_HOOKED_PATH;
-        }
+
         return ERR_SUCCESS;
 }
 
@@ -129,7 +129,33 @@ safe_file_close(FILE **file) {
         }
 }
 
-const char*
+
+static const char* retrieve_err_name(errorc ec);
+static const char* retrieve_err_msg(errorc ec);
+
+void
+log_err(errorc ec) {
+        printf("\n [ERR] Error encountered, exiting program.\n");
+        printf("  - Cause: '%s'.\n", retrieve_err_name(ec));
+        printf("  - Message: '%s'.\n\n", retrieve_err_msg(ec));
+}
+
+static const char*
+retrieve_err_name(errorc ec) {
+        switch (ec) {
+                case ERR_SUCCESS: return "ERR_SUCCESS";
+                case ERR_FAILURE: return "ERR_FAILURE";
+                case ERR_NULL: return "ERR_NULL";
+                case ERR_INVALID_CMD: return "ERR_INVALID_CMD";
+                case ERR_PATH_TO_LONG: return "ERR_PATH_TO_LONG";
+                case ERR_INVALID_PATH: return "ERR_INVALID_PATH";
+                case ERR_UNKNOWN_HOOK: return "ERR_UNKNOWN_HOOK";
+                case ERR_INVALID_HOOKED_PATH: return "ERR_INVALID_HOOKED_PATH";
+                default: return "";
+        }
+}
+
+static const char*
 retrieve_err_msg(errorc ec) {
         switch (ec) {
                 case ERR_SUCCESS: return "Success.";

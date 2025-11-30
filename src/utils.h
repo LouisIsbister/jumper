@@ -64,46 +64,42 @@ errorc populate_hook_entry(const char *hook_name, hook_entry_t* hook_entry, FILE
 errorc retrieve_hook(const char *target_hook_name, hook_entry_t *hook, FILE *conf_file);
 errorc tokenise_hook(hook_entry_t *hook);
 
-// errorc retrieve_hook(const char *target_hook_name, hook_entry_t *buffer, FILE *conf_file);
-// errorc tokenise_hook(hook_entry_t *hook); 
-
-
 void format_hook(char *hook_buffer, char *name, char *dir, char *descr);
 void format_hook_from_tokens(char *hook_buffer, char **tokens);
 
 void safe_file_close(FILE **file);
 
-const char *retrieve_err_msg(errorc ec);
+void log_err(errorc ec);
 
 
 
 #define HELP_MSG "\n\n  ~ Welcome to jumper! ~\n\n"                                                                                                             \
-        "The goal of this program is to be able to conviently `cd` to your frequently used directories.\n"                                                      \
-        "This is achieved by creating a `hook` to said directories, then simply running the jumper program to go there.\n\n\n"                                  \
+        "The goal of this program is to be able to conviently jump to your frequently used directories.\n"                                                      \
+        "This is achieved by creating a \"hook\" to said directories, then simply running the jumper program to go there.\n\n\n"                                \
         "      ~ Commands: ~\n\n"                                                                                                                               \
                                                                                                                                                                 \
-        "`jumper <hook_name>`\n"                                                                                                                                \
-        "  - *prints* the directory associated with the hook name to standard out\n\n"                                                                          \
+        "cd `jumper <hook_name>`\n"                                                                                                                             \
+        "  - jumps to the directory associated with the hook name\n\n"                                                                                          \
                                                                                                                                                                 \
-        "`jumper -add <hook_name> -dir <dir> [-descr \"<description>\"]`\n"                                                                                     \
+        "jumper -add <hook_name> -dir <dir> [-descr \"<description>\"]\n"                                                                                       \
         "  - create a new hooked directory\n\n"                                                                                                                 \
                                                                                                                                                                 \
-        "`jumper -mod <hook_name> (-dir <new_dir> | -descr \"<new_description>\")`\n"                                                                           \
+        "jumper -mod <hook_name> (-dir <new_dir> | -descr \"<new_description>\")\n"                                                                             \
         "  - modify the contents of an existing hook. Both the directory and description are optional, but at least on must always be provided!\n\n"            \
                                                                                                                                                                 \
-        "`jumper -del <hook_name>`\n"                                                                                                                           \
+        "jumper -del <hook_name>\n"                                                                                                                             \
         "  - delete a hook by its name\n\n"                                                                                                                     \
                                                                                                                                                                 \
-        "`jumper -dir <hook_name>`\n"                                                                                                                           \
+        "jumper -dir <hook_name>\n"                                                                                                                             \
         "  - print the directory associated with a hook\n\n"                                                                                                    \
                                                                                                                                                                 \
-        "`jumper -descr <hook_name>`\n"                                                                                                                         \
+        "jumper -descr <hook_name>\n"                                                                                                                           \
         "  - print the description associated with a hook\n\n"                                                                                                  \
                                                                                                                                                                 \
-        "`jumper -list`\n"                                                                                                                                      \
+        "jumper -list\n"                                                                                                                                        \
         "  - print all hooks alone with their descriptions\n\n"                                                                                                 \
                                                                                                                                                                 \
-        "`jumper -help`\n"                                                                                                                                      \
+        "jumper -help\n"                                                                                                                                        \
         "  - print all this information to the terminal\n\n\n\n"
 
 #endif // UTILS_H

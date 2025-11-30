@@ -114,7 +114,7 @@ handle_jump(const char *hook_name) {
 
         errorc err = do_jump(hook_name, fptr);
         if (err != ERR_SUCCESS) {
-                printf(" [ERR] Failure\n Message: %s\n", retrieve_err_msg(err));
+                log_err(err);
                 return 1;
         }
 
@@ -256,7 +256,8 @@ exec() {
                         printf("Invalid command. No primary action to perform, please use -help as a reference.\n");
         }
 
-        // printf(" Response: %s\n", retrieve_err_msg(ret));
+        if (ret != ERR_SUCCESS)
+                log_err(ret);
 
         fclose(conf_file);
 }
