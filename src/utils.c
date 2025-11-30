@@ -6,10 +6,6 @@
 #include <assert.h>
 
 
-static errorc retrieve_hook(const char *target_hook_name, hook_entry_t *hook, FILE *conf_file);
-static errorc tokenise_hook(hook_entry_t *hook);
-
-
 hook_entry_t *
 init_hook_entry(const char *hook_name, FILE *conf_file) {
         hook_entry_t *hook = (hook_entry_t *)calloc(1, sizeof(hook_entry_t));
@@ -59,7 +55,7 @@ populate_hook_entry(const char *hook_name, hook_entry_t* hook_entry, FILE *conf_
   *@brief find an copy the target hook into `buffer`
   *@return
  */
-static errorc 
+errorc 
 retrieve_hook(const char *target_hook_name, hook_entry_t *hook, FILE *conf_file) {
         size_t t_hook_name_len = strlen(target_hook_name);
         
@@ -86,7 +82,7 @@ retrieve_hook(const char *target_hook_name, hook_entry_t *hook, FILE *conf_file)
 }
 
 
-static errorc
+errorc
 tokenise_hook(hook_entry_t *hook) {
         char *save_state;
         char *token = strtok_r(hook->content, "|", &save_state);

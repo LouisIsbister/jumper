@@ -6,6 +6,7 @@
 #include <stdarg.h>
 #include <assert.h>
 
+
 static int handle_jump(const char *hook_name);
 
 static void init_context();
@@ -14,11 +15,10 @@ static void cleanup_and_exit(uint8_t code);
 
 static void parse_args(int argc, char **argv);
 static jmp_flag_context_t *retrieve_flag_context(const char *str);
+
 static bool validate_cmd();
 
 static void exec();
-
-static bool strncmp_ext(const char *s1, const char *s2, uint8_t n);
 
 
 /**
@@ -86,7 +86,7 @@ main(int argc, char **argv) {
 
         parse_args(argc, argv);
 
-        DEBUG_JUMPER_CONTEXT(_jctx);
+        // DEBUG_JUMPER_CONTEXT(_jctx);
 
         if (!validate_cmd()) {
                 printf(" [ERR] Invalid combination of arguments detected, please use the -help flag for further information.\n");
@@ -193,7 +193,10 @@ retrieve_flag_context(const char *str) {
         uint8_t l = sizeof(_flag_ctxts) / sizeof(jmp_flag_context_t);
         for (uint8_t i = 0; i < l; i++) {
                 jmp_flag_context_t *flag = &_flag_ctxts[i];
-                if (strncmp_ext(flag->name, str, strlen(flag->name)))
+
+                size_t str_l = strlen(str);
+                size_t flg_l = strlen(flag->name);
+                if (str_l == flg_l && strncmp(flag->name, str, str_l))
                         return flag;
         }
         return NULL;
@@ -254,13 +257,7 @@ exec() {
                         printf("Invalid command. No primary action to perform, please use -help as a reference.\n");
         }
 
-        printf(" Response: %s\n", retrieve_err_msg(ret));
+        // printf(" Response: %s\n", retrieve_err_msg(ret));
 
         fclose(conf_file);
-}
-
-static bool
-strncmp_ext(const char *s1, const char *s2, uint8_t n) {
-        assert(strlen(s1) == n);
-        return strlen(s2) == n && strncmp(s1, s2, n) == 0;
 }

@@ -61,6 +61,8 @@ hook_entry_t *init_hook_entry(const char *hook_name, FILE *conf_file);
 void cleanup_hook_entry(hook_entry_t *hook);
 
 errorc populate_hook_entry(const char *hook_name, hook_entry_t* hook_entry, FILE *conf_file);
+errorc retrieve_hook(const char *target_hook_name, hook_entry_t *hook, FILE *conf_file);
+errorc tokenise_hook(hook_entry_t *hook);
 
 // errorc retrieve_hook(const char *target_hook_name, hook_entry_t *buffer, FILE *conf_file);
 // errorc tokenise_hook(hook_entry_t *hook); 

@@ -5,8 +5,45 @@
 #include <assert.h>
 
 
-static errorc write_changes(const char *content, uint32_t target_line_number, FILE* conf_file);
-static jmp_arg_t* retrieve_arg_by_flag(jmp_context_t *jctx, jmp_flag_t type);
+static errorc
+write_changes(const char *content, uint32_t target_line_number, FILE* conf_file) {
+        FILE *tmp = fopen(TMP_CONF_FNAME, "w");
+        if (tmp == NULL) {
+                printf(" [ERR] Failed to open temp file. Exiting...\n");
+                return ERR_FAILURE;
+        }
+
+        uint16_t line = 1;
+        char line_buffer[MAX_HOOK_LENGTH];
+        while (fgets(line_buffer, MAX_HOOK_LENGTH, conf_file) != NULL) {
+                if (line == target_line_number) {
+                        fprintf(tmp, "%s", content);
+                } else {
+                        fprintf(tmp, "%s", line_buffer);
+                }
+                line++;
+        }
+
+        remove(CONF_FNAME);
+        rename(TMP_CONF_FNAME, CONF_FNAME);
+
+        return ERR_SUCCESS;
+}
+
+
+static jmp_arg_t*
+retrieve_arg_by_flag(jmp_context_t *jctx, jmp_flag_t type) {
+        uint8_t l = sizeof(jctx->args) / sizeof(jmp_arg_t*);
+        for (uint8_t i = 0; i < l; i++) {
+                jmp_arg_t *arg = jctx->args[i];
+                if (arg == NULL)
+                        continue;
+                if (type == arg->flag->type)
+                        return arg;
+        }
+        return NULL;
+}
+
 
 
 errorc
@@ -119,7 +156,7 @@ do_descr(jmp_context_t* jctx, FILE *conf_file) {
         if (hook == NULL)
                 return ERR_FAILURE;
         
-        printf(" Dscription of %s is: '%s'\n", descr_ctxt->value, hook->tokens[2]);
+        printf(" The description of %s is: '%s'\n", descr_ctxt->value, hook->tokens[2]);
         cleanup_hook_entry(hook);
         return ERR_SUCCESS;
 }
@@ -128,9 +165,29 @@ do_descr(jmp_context_t* jctx, FILE *conf_file) {
 
 errorc
 do_list(FILE *conf_file) {
+        hook_entry_t *hook_entry = (hook_entry_t *) calloc(1, sizeof(hook_entry_t));
+        if (hook_entry == NULL) {
+                printf(" [ERR] Failed to allocate hook_entry_t. Exiting...\n");
+                return ERR_FAILURE;
+        }
+
+        char buffer[MAX_HOOK_LENGTH] = { 0 };
+        uint32_t line = 1;
+        while (fgets(buffer, MAX_HOOK_LENGTH, conf_file)) {
+                strncpy(hook_entry->content, buffer, MAX_HOOK_LENGTH);
+                tokenise_hook(hook_entry);
+
+                printf("\n Hook No.%d:\n", line++);
+                printf("  ~ Name: '%s'\n", hook_entry->tokens[0]);
+                printf("  ~ Path: '%s'\n", hook_entry->tokens[1]);
+                printf("  ~ Description: %s\n", hook_entry->tokens[2]);
+        }
+
+        if (line == 1)
+                printf("\n ~ Empty .config! No Hooks to List ~\n\n");
+
         return ERR_SUCCESS;
 }
-
 
 errorc
 do_help() {
@@ -140,158 +197,3 @@ do_help() {
 
 
 
-
-
-
-
-static errorc
-write_changes(const char *content, uint32_t target_line_number, FILE* conf_file) {
-        FILE *tmp = fopen(TMP_CONF_FNAME, "w");
-        if (tmp == NULL) {
-                printf(" [ERR] Failed to open temp file. Exiting...\n");
-                return ERR_FAILURE;
-        }
-
-        uint16_t line = 1;
-        char line_buffer[MAX_HOOK_LENGTH];
-        while (fgets(line_buffer, MAX_HOOK_LENGTH, conf_file) != NULL) {
-                printf("%d, %d\n", line, target_line_number);
-                if (line == target_line_number) {
-                        fprintf(tmp, "%s", content);
-                } else {
-                        fprintf(tmp, "%s", line_buffer);
-                }
-                line++;
-        }
-
-        remove(CONF_FNAME);
-        rename(TMP_CONF_FNAME, CONF_FNAME);
-
-        return ERR_SUCCESS;
-}
-
-
-
-static jmp_arg_t*
-retrieve_arg_by_flag(jmp_context_t *jctx, jmp_flag_t type) {
-        uint8_t l = sizeof(jctx->args) / sizeof(jmp_arg_t*);
-        for (uint8_t i = 0; i < l; i++) {
-                jmp_arg_t *arg = jctx->args[i];
-                if (arg == NULL)
-                        continue;
-                if (type == arg->flag->type)
-                        return arg;
-        }
-        return NULL;
-}
-
-
-
-// void 
-// mod(uint16_t targetLine, char *hookName, char *hookDir, char *hookDescr, char *originalHook, FILE *confFile) {
-//         // tokenise the hook entry into name, directory, and description
-//         char *hTokens[3];
-//         ERR_CODE ret = tokeniseHookEntry(hTokens, originalHook);
-
-//         if (hookDir != NULL)   hTokens[1] = hookDir;
-//         if (hookDescr != NULL) hTokens[2] = hookDescr;
-
-//         char modifiedHook[MAX_HOOK_LENGTH];
-//         formatFromTokens(modifiedHook, hTokens);
-
-//         writeToTemporaryFile(targetLine, MOD, modifiedHook, confFile);
-// }
-
-
-// void 
-// del(uint16_t targetLine, FILE *confFile) {
-//         writeToTemporaryFile(targetLine, DEL, "", confFile);
-// }
-
-
-// void 
-// writeToTemporaryFile(uint16_t targetLine, ACTION action, char *newHook, FILE *confFile) {
-//         FILE *tmp = fopen("temp.tmp", "w");
-//         if (tmp == NULL) {
-//                 perror("File error");
-//                 return;
-//         }
-
-//         uint16_t curLine = 1;
-//         char hookEntry[MAX_HOOK_LENGTH];
-//         while (fgets(hookEntry, MAX_HOOK_LENGTH, confFile) != NULL) {
-//                 // if given MOD then append the new hook, otherwise skip the line for DEL
-//                 if (curLine++ == targetLine) {
-//                         if (action == MOD) {
-//                                 fputs(newHook, tmp);
-//                         }
-//                         continue;
-//                 }
-//                 fputs(hookEntry, tmp);
-//         }
-
-//         fclose(tmp);
-//         safeFileClose(&confFile);
-
-// #if !TESTING
-//         remove(CONF_FNAME);
-//         rename("temp.tmp", CONF_FNAME);
-// #endif
-// }
-
-// // // code to format conf file
-// // // make sure every hook in the file has a \n on the end!
-// // size_t hookLen = strlen(hookEntry);
-// // if (hookEntry[hookLen - 1] != '\n') {
-// //     char updated[hookLen + 1];
-// //     snprintf(updated, hookLen + 1, "%s\n", hookEntry);
-// //     fputs(updated, tmp);
-// // } else {
-// //     fputs(hookEntry, tmp);
-// // }
-
-
-// void
-// descr(char *hookName, char *descr) {
-//         printf("\nDescription for hook: '%s'\n", hookName);
-//         printf(" ~ \"%s\"\n\n", descr);
-// }
-
-
-// /**
-//   *iterates through the entire file and prints each hook
-//  */
-// void
-// list(FILE *confFile) {
-//         char hookEntry[MAX_HOOK_LENGTH];
-//         int hookNum = 0;
-
-//         ERR_CODE ret; printf("\n"); // just to get the seperator!
-//         while (hookNum++, fgets(hookEntry, MAX_HOOK_LENGTH, confFile) != NULL) {
-//                 // converts the token entry into name, hook dir, and description
-//                 char *hTokens[3];
-//                 ret = tokeniseHookEntry(hTokens, hookEntry);
-//                 if (ret == ERR_INVALID_HOOKED_PATH) {
-//                         printf("!! It appears the following hook may have been corrupted, please check .conf file:\nHook: %s\n\n", hookEntry);
-//                         continue;
-//                 }
-
-//                 printf(" Hook No.%d:\n", hookNum);
-//                 printf("  ~ Name: '%s'\n", hTokens[0]);
-//                 printf("  ~ Path: '%s'\n", hTokens[1]);
-//                 printf("  ~ Description: %s\n\n", hTokens[2]);
-//         }
-
-//         if (hookNum == 1) {
-//                 printf("\n ~ Empty .config! No Hooks to List ~\n\n");
-//         }
-// }
-
-
-// /**
-//   *simply prints the help message
-//  */
-// void 
-// help() {
-//         printf(HELP_MSG);
-// }   
