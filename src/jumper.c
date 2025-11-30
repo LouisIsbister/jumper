@@ -41,13 +41,23 @@ static const jmp_flag_context_t _flag_ctxts[] = {
         },
         { MOD, 
                 "-mod",
-                "w+", 
+                "r", 
                 { MOD|DIR, MOD|DESCR, MOD|DIR|DESCR, 0 }
         },
         { DEL,
                 "-del",
-                "w+",
+                "r",
                 { DEL, 0 }
+        },
+        { DIR,
+                "-dir" ,
+                "r",
+                { DIR, 0 }
+        },
+        { DESCR,
+                "-descr",
+                "r",
+                { DESCR, 0 }
         },
         { LIST,
                 "-list",
@@ -58,16 +68,6 @@ static const jmp_flag_context_t _flag_ctxts[] = {
                 "-help",
                 NULL,
                 { HELP, 0 }
-        },
-        { DIR,
-                "-dir" ,
-                NULL,
-                { 0 }
-        },
-        { DESCR,
-                "-descr",
-                NULL,
-                { 0 }
         }
 };
 
@@ -230,20 +230,31 @@ exec() {
                 return;
         }
 
+        errorc ret;
         switch (_jctx->msf->type) {
                 case ADD: 
-                        do_add(_jctx, conf_file);
+                        ret = do_add(_jctx, conf_file);
                         break;
-                case MOD: 
+                case MOD:
+                        ret = do_mod(_jctx, conf_file);
                         break;
                 case DEL:
+                        ret = do_del(_jctx, conf_file); 
+                        break;
+                case DIR:
+                        ret = do_dir(_jctx, conf_file);
+                        break;
+                case DESCR:
+                        ret = do_descr(_jctx, conf_file);
                         break;
                 case LIST:
-                        do_list(conf_file);
+                        ret = do_list(conf_file);
                         break;
                 default: 
                         printf("Invalid command. No primary action to perform, please use -help as a reference.\n");
         }
+
+        printf(" Response: %s\n", retrieve_err_msg(ret));
 
         fclose(conf_file);
 }

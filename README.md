@@ -14,6 +14,9 @@ As much as I enjoy doing things from the command line, one thing I thoroughly di
 `jumper -del <hook_name>`
   - delete a hook by its name
 
+`jumper -dir <hook_name>`
+  - print the directory associated with a hook
+
 `jumper -descr <hook_name>`
   - print the description associated with a hook
 

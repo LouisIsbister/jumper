@@ -6,12 +6,27 @@
 #include <assert.h>
 
 
+static errorc retrieve_hook(const char *target_hook_name, hook_entry_t *hook, FILE *conf_file);
+static errorc tokenise_hook(hook_entry_t *hook);
+
+
 hook_entry_t *
-init_hook_entry() {
-        hook_entry_t *hook = (hook_entry_t *) calloc(1, sizeof(hook_entry_t));
-        assert(hook->line_number == 0);
+init_hook_entry(const char *hook_name, FILE *conf_file) {
+        hook_entry_t *hook = (hook_entry_t *)calloc(1, sizeof(hook_entry_t));
+        if (hook == NULL) {
+                printf("[ERR] Failed to allocate hook_entry_t. Exiting...\n");
+                return NULL;
+        }
+
+        errorc err = populate_hook_entry(hook_name, hook, conf_file);
+        if (err != ERR_SUCCESS) {
+                cleanup_hook_entry(hook);
+                return NULL;
+        }
         return hook;
 }
+
+
 
 void 
 cleanup_hook_entry(hook_entry_t *hook) {
@@ -23,22 +38,45 @@ cleanup_hook_entry(hook_entry_t *hook) {
 }
 
 
+errorc
+populate_hook_entry(const char *hook_name, hook_entry_t* hook_entry, FILE *conf_file) {
+        errorc err;
+        
+        err = retrieve_hook(hook_name, hook_entry, conf_file);
+        if (err != ERR_SUCCESS)
+                return err;
+
+        err = tokenise_hook(hook_entry);
+        if (err != ERR_SUCCESS)
+                return err;
+
+        return ERR_SUCCESS;
+}
+
+
+
 /**
   *@brief find an copy the target hook into `buffer`
   *@return
  */
-errorc 
+static errorc 
 retrieve_hook(const char *target_hook_name, hook_entry_t *hook, FILE *conf_file) {
         size_t t_hook_name_len = strlen(target_hook_name);
         
         uint32_t line = 1;
-        char hook_entry[MAX_HOOK_LENGTH];
+        char hook_entry[MAX_HOOK_LENGTH] = { 0 };
         while (fgets(hook_entry, MAX_HOOK_LENGTH, conf_file) != NULL) {
                 if (strncmp(hook_entry, target_hook_name, t_hook_name_len) == 0) {
                         if (hook_entry[t_hook_name_len] != '|')
                                 continue;
 
+                        // remove newlines from the hook entry 
+                        while (hook_entry[strlen(hook_entry) - 1] == '\n')
+                                hook_entry[strlen(hook_entry) - 1] = '\0';
+
+                        hook->line_number = line;
                         strncpy(hook->content, hook_entry, MAX_HOOK_LENGTH);
+
                         fseek(conf_file, 0, SEEK_SET);
                         return ERR_SUCCESS;
                 }
@@ -48,7 +86,7 @@ retrieve_hook(const char *target_hook_name, hook_entry_t *hook, FILE *conf_file)
 }
 
 
-errorc
+static errorc
 tokenise_hook(hook_entry_t *hook) {
         char *save_state;
         char *token = strtok_r(hook->content, "|", &save_state);

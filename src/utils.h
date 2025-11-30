@@ -10,14 +10,17 @@
 
 #if 1
 #define CONF_FNAME                      "/home/louis/projects/jumper/jumper.conf.test"
+#define TMP_CONF_FNAME                  "/home/louis/projects/jumper/jumper.conf.tmp.test"
 #elif
 #define CONF_FNAME                      "/etc/jumper.conf"
+#define TMP_CONF_FNAME                  "/etc/jumper.conf.tmp"
 #endif
 
 
 #define MAX_ARG_COUNT                   3
 #define MAX_HOOK_LENGTH                 1024
 #define NUM_TOKENS_IN_HOOK              3
+
 
 
 typedef struct hook_entry hook_entry_t;
@@ -30,16 +33,14 @@ typedef struct hook_entry {
 
 
 typedef enum jmp_flag {
-        // standalone commands. I.e. you could not include -add and -del in the same command 
         JUMP, 
         ADD,
         MOD,
         DEL,
-        LIST,
-        HELP,
-        // additional flags used for setting the value of certain information
         DIR,
-        DESCR
+        DESCR,
+        LIST,
+        HELP
 } jmp_flag_t;
 
 
@@ -56,12 +57,13 @@ typedef enum error_code {
         ERR_INVALID_HOOKED_PATH,
 } errorc;
 
-
-hook_entry_t *init_hook_entry();
+hook_entry_t *init_hook_entry(const char *hook_name, FILE *conf_file);
 void cleanup_hook_entry(hook_entry_t *hook);
 
-errorc retrieve_hook(const char *target_hook_name, hook_entry_t *buffer, FILE *conf_file);
-errorc tokenise_hook(hook_entry_t *hook); 
+errorc populate_hook_entry(const char *hook_name, hook_entry_t* hook_entry, FILE *conf_file);
+
+// errorc retrieve_hook(const char *target_hook_name, hook_entry_t *buffer, FILE *conf_file);
+// errorc tokenise_hook(hook_entry_t *hook); 
 
 
 void format_hook(char *hook_buffer, char *name, char *dir, char *descr);
@@ -79,7 +81,7 @@ const char *retrieve_err_msg(errorc ec);
         "      ~ Commands: ~\n\n"                                                                                                                               \
                                                                                                                                                                 \
         "`jumper <hook_name>`\n"                                                                                                                                \
-        "  - jump to the directory associated with the hook name\n\n"                                                                                           \
+        "  - *prints* the directory associated with the hook name to standard out\n\n"                                                                          \
                                                                                                                                                                 \
         "`jumper -add <hook_name> -dir <dir> [-descr \"<description>\"]`\n"                                                                                     \
         "  - create a new hooked directory\n\n"                                                                                                                 \
@@ -89,6 +91,9 @@ const char *retrieve_err_msg(errorc ec);
                                                                                                                                                                 \
         "`jumper -del <hook_name>`\n"                                                                                                                           \
         "  - delete a hook by its name\n\n"                                                                                                                     \
+                                                                                                                                                                \
+        "`jumper -dir <hook_name>`\n"                                                                                                                           \
+        "  - print the directory associated with a hook\n\n"                                                                                                    \
                                                                                                                                                                 \
         "`jumper -descr <hook_name>`\n"                                                                                                                         \
         "  - print the description associated with a hook\n\n"                                                                                                  \
