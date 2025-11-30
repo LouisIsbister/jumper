@@ -1,8 +1,8 @@
 # Jumper  
-As much as I enjoy doing things from the command line, one thing I thoroughly dislike is typing out really long and laborious directoy paths to get to my frequently visited directories, especially my university directory! As such, this is a simple program to that allows you to hook directories you often visit and navigate to them immediately by just executing `jumper <hook_name>`. I am fully aware this is neither orignal nor very difficult to make, I just wanted an execuse to write something small in C :)
+Simple program that allows you to hook directories you often visit to short and simple names, and navigate to them in one short command. I am fully aware this is neither original nor very difficult to make, I just wanted an execuse to write something small in C :)
 
 ### Commands:
-`jumper <hook_name>`
+``cd `jumper <hook_name>` ``
   - jump to the directory associated with the hook name
 
 `jumper -add <hook_name> -dir <dir> [-descr "<description>"]`
