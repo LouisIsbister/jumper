@@ -1,60 +1,34 @@
 
 #include "utils.h"
+#include "jumper.h"
+
 #include <string.h>
 #include <assert.h>
 
-static bool strncmp_ext(const char* s1, const char* s2, uint8_t n);
 
-static struct {
-        const char* flag_name;
-        jmp_flag_t flag;
-} str_to_flag[] = {
-        {"-add",   ADD},
-        {"-mod",   MOD},
-        {"-del",   DEL},
-        {"-list",  LIST},
-        {"-help",  HELP},
-        {"-dir",   DIR},
-        {"-descr", DESCR},
-        {NULL, 0}
-};
-
-jmp_flag_t
-flag_type_of(const char* str) {
-        uint8_t l = sizeof(str_to_flag) / sizeof(str_to_flag[0]);
-        for (uint8_t i = 0; i < l; i++) {
-                const char* flg_name = str_to_flag[i].flag_name; 
-                size_t arg_len = strlen(flg_name);
-                if (strncmp_ext(flg_name, str, strlen(flg_name)))
-                        return str_to_flag[i].flag;
-        }
-        return UNKNOWN;
+hook_entry_t *
+init_hook_entry() {
+        hook_entry_t *hook = (hook_entry_t *) calloc(1, sizeof(hook_entry_t));
+        assert(hook->line_number == 0);
+        return hook;
 }
 
-static bool
-strncmp_ext(const char* s1, const char* s2, uint8_t n) {
-        assert(strlen(s1) == n);
-        return strlen(s2) == n && strncmp(s1, s2, n) == 0;
-}
-
-
-const char* 
-flag_type_to_str(const jmp_flag_t a) {
-        uint8_t l = sizeof(str_to_flag) / sizeof(str_to_flag[0]);
-        for (uint8_t i = 0; i < l; i++) {
-                if (a == str_to_flag[i].flag)
-                        return str_to_flag[i].flag_name;
+void 
+cleanup_hook_entry(hook_entry_t *hook) {
+        for (uint8_t i = 0; i < NUM_TOKENS_IN_HOOK; i++) {
+                if (hook->tokens[i] != NULL)
+                        free(hook->tokens[i]);
         }
-        return "[ERR] Unrecognised flag";
+        free(hook);
 }
 
 
 /**
- * @brief find an copy the target hook into `buffer`
- * @return the line number of this hook in the config file
+  *@brief find an copy the target hook into `buffer`
+  *@return
  */
-uint32_t 
-retrieve_hook(char *target_hook_name, char *buffer, FILE *conf_file) {
+errorc 
+retrieve_hook(const char *target_hook_name, hook_entry_t *hook, FILE *conf_file) {
         size_t t_hook_name_len = strlen(target_hook_name);
         
         uint32_t line = 1;
@@ -64,32 +38,44 @@ retrieve_hook(char *target_hook_name, char *buffer, FILE *conf_file) {
                         if (hook_entry[t_hook_name_len] != '|')
                                 continue;
 
-                        strncpy(buffer, hook_entry, MAX_HOOK_LENGTH);
+                        strncpy(hook->content, hook_entry, MAX_HOOK_LENGTH);
                         fseek(conf_file, 0, SEEK_SET);
-                        return line;
+                        return ERR_SUCCESS;
                 }
                 line++;
         }
-        return 0;
+        return ERR_UNKNOWN_HOOK;
 }
 
 
-errorc 
-tokenise_hook(char **tokens, char *hook_entry) {
+errorc
+tokenise_hook(hook_entry_t *hook) {
         char *save_state;
-        char *token = strtok_r(hook_entry, "|", &save_state);
+        char *token = strtok_r(hook->content, "|", &save_state);
         
-        uint8_t i;
-        for (i = 0; i < NUM_FIELDS_IN_HOOK; i++) {
-                tokens[i++] = token;
+        for (uint8_t i = 0; i < NUM_TOKENS_IN_HOOK; i++) {
+                if (token == NULL) {
+                        hook->tokens[i] = NULL;
+                        continue;
+                }
+
+                hook->tokens[i] = (char *)calloc(strlen(token)+1, sizeof(char));
+                if (hook->tokens[i] == NULL) {
+                        printf("Failed to allocate memory for token: %s\n", token);
+                        continue;
+                }
+                strncpy(hook->tokens[i], token, strlen(token));
                 token = strtok_r(NULL, "|", &save_state);
         }
 
-        if (token != NULL)
+        if (token != NULL) {
+                printf("Token left: '%s', hook context: '%s'\n", token, hook->content);
                 return ERR_INVALID_HOOKED_PATH;
-
+        }
         return ERR_SUCCESS;
 }
+
+
 
 void 
 format_hook(char *buffer, char *name, char *dir, char *descr) {
@@ -118,7 +104,7 @@ retrieve_err_msg(errorc ec) {
                 case ERR_INVALID_CMD: return "Invalid command detected!";
                 case ERR_PATH_TO_LONG: return "Provided path longer than 1024 characters! Seems a bit excessive?!";
                 case ERR_INVALID_PATH: return "Invalid path format provided, please check it!";
-                case ERR_UNKNOWN_HOOK: return "Unknown hook detected!";
+                case ERR_UNKNOWN_HOOK: return "Unknown hook detected! Run with -list flag to view all hooks.";
                 case ERR_INVALID_HOOKED_PATH: return "Hooked path has been corrupted, update it with `mod` or manually in jumper.conf!";
                 default: return "[ERR] no msg for this error code.";
         }

@@ -4,11 +4,16 @@
 #ifndef COMMANDS_H
 #define COMMANDS_H
 
-void add(char *newHook, FILE *confFile);
+errorc do_jump(const char *hook_name, FILE *conf_file);
+
+void do_add(jmp_context_t *jctx, FILE *conf_file);
+
+void do_list(FILE *conf_file);
+void do_help();
+
+
 void mod(uint16_t lineNumber, char *name, char *dir, char *descr, char *originalHook, FILE *confFile);
 void del(uint16_t line, FILE *confFile);
 void descr(char *hName, char *descr);
-void list(FILE *confFile);
-void help();
 
 #endif // COMMANDS_H
