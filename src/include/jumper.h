@@ -10,7 +10,8 @@ typedef struct jmp_flag_context jmp_flag_context_t;
 
 
 #define DEBUG_JUMPER_CONTEXT(jctx)                                                      \
-        printf("\nArg count: %d\n", (jctx)->arg_count);                                 \
+        printf("\n [DUBUG] jumper context contents\n");                                 \
+        printf("Arg count: %d\n", (jctx)->arg_count);                                   \
         printf("Action: '%s'\n", (jctx)->msf->name);                                    \
         for (int i = 0; i < (jctx)->arg_count; i++) {                                   \
                 jmp_arg_t *a = (jctx)->args[i];                                         \

@@ -1,9 +1,12 @@
 
-#include "utils.h"
-#include "jumper.h"
+#include "include/utils.h"
+#include "include/jumper.h"
 
 #include <string.h>
 #include <assert.h>
+
+
+static errorc retrieve_hook(const char *target_hook_name, hook_entry_t *hook, FILE *conf_file);
 
 
 hook_entry_t *
@@ -38,7 +41,7 @@ cleanup_hook_entry(hook_entry_t *hook) {
 errorc
 populate_hook_entry(const char *hook_name, hook_entry_t* hook_entry, FILE *conf_file) {
         errorc err;
-        
+
         err = retrieve_hook(hook_name, hook_entry, conf_file);
         if (err != ERR_SUCCESS)
                 return err;
@@ -56,28 +59,28 @@ populate_hook_entry(const char *hook_name, hook_entry_t* hook_entry, FILE *conf_
   *@brief find an copy the target hook into `buffer`
   *@return
  */
-errorc 
+static errorc 
 retrieve_hook(const char *target_hook_name, hook_entry_t *hook, FILE *conf_file) {
         size_t t_hook_name_len = strlen(target_hook_name);
         
-        uint32_t line = 1;
+        uint32_t line = 0;
         char hook_entry[MAX_HOOK_LENGTH] = { 0 };
         while (fgets(hook_entry, MAX_HOOK_LENGTH, conf_file) != NULL) {
-                if (strncmp(hook_entry, target_hook_name, t_hook_name_len) == 0) {
-                        if (hook_entry[t_hook_name_len] != '|')
-                                continue;
-
-                        // remove newlines from the hook entry 
-                        while (hook_entry[strlen(hook_entry) - 1] == '\n')
-                                hook_entry[strlen(hook_entry) - 1] = '\0';
-
-                        hook->line_number = line;
-                        strncpy(hook->content, hook_entry, MAX_HOOK_LENGTH);
-
-                        fseek(conf_file, 0, SEEK_SET);
-                        return ERR_SUCCESS;
-                }
                 line++;
+                if (strncmp(hook_entry, target_hook_name, t_hook_name_len) != 0) 
+                        continue;
+                else if (hook_entry[t_hook_name_len] != '|')
+                        continue;
+
+                // remove newlines from the hook entry 
+                while (hook_entry[strlen(hook_entry) - 1] == '\n')
+                        hook_entry[strlen(hook_entry) - 1] = '\0';
+
+                hook->line_number = line;
+                strncpy(hook->content, hook_entry, MAX_HOOK_LENGTH);
+                fseek(conf_file, 0, SEEK_SET);
+                return ERR_SUCCESS;
+        
         }
         return ERR_UNKNOWN_HOOK;
 }

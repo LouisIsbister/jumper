@@ -18,12 +18,9 @@
 
 
 #define MAX_ARG_COUNT                   3
-#define MAX_HOOK_LENGTH                 1024
+#define MAX_HOOK_LENGTH                 65536
 #define NUM_TOKENS_IN_HOOK              3
 
-
-
-typedef struct hook_entry hook_entry_t;
 
 typedef struct hook_entry {
         uint32_t line_number;
@@ -57,11 +54,11 @@ typedef enum error_code {
         ERR_INVALID_HOOKED_PATH,
 } errorc;
 
+
 hook_entry_t *init_hook_entry(const char *hook_name, FILE *conf_file);
 void cleanup_hook_entry(hook_entry_t *hook);
 
 errorc populate_hook_entry(const char *hook_name, hook_entry_t* hook_entry, FILE *conf_file);
-errorc retrieve_hook(const char *target_hook_name, hook_entry_t *hook, FILE *conf_file);
 errorc tokenise_hook(hook_entry_t *hook);
 
 void format_hook(char *hook_buffer, char *name, char *dir, char *descr);
@@ -70,7 +67,6 @@ void format_hook_from_tokens(char *hook_buffer, char **tokens);
 void safe_file_close(FILE **file);
 
 void log_err(errorc ec);
-
 
 
 #define HELP_MSG "\n\n  ~ Welcome to jumper! ~\n\n"                                                                                                             \

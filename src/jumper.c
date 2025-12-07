@@ -1,13 +1,13 @@
 
-#include "jumper.h"
-#include "commands.h"
+#include "include/jumper.h"
+#include "include/commands.h"
 
 #include <string.h>
 #include <stdarg.h>
 #include <assert.h>
 
 
-static int handle_jump(const char *hook_name);
+static uint8_t handle_jump(const char *hook_name);
 
 static void init_context();
 static void cleanup_context();
@@ -104,7 +104,7 @@ main(int argc, char **argv) {
  * @param hook_name, identifier of the target hook
  * @return 
  */
-static int
+static uint8_t
 handle_jump(const char *hook_name) {
         FILE *fptr = fopen(CONF_FNAME, "r");
         if (fptr == NULL) {
@@ -117,7 +117,6 @@ handle_jump(const char *hook_name) {
                 log_err(err);
                 return 1;
         }
-
         return 0;
 }
 

@@ -1,12 +1,12 @@
 
-#include "jumper.h"
+#include "include/jumper.h"
 
 #include <string.h>
 #include <assert.h>
 
 
 static errorc
-write_changes(const char *new_content, uint32_t target_line_number, FILE* conf_file) {
+write_changes(char *new_content, uint32_t target_line_number, FILE* conf_file) {
         FILE *tmp = fopen(TMP_CONF_FNAME, "w");
         if (tmp == NULL) {
                 printf(" [ERR] Failed to open temp file. Exiting...\n");
